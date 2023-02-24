@@ -15,6 +15,7 @@ import static org.mockito.Mockito.*;
 public class StreamsTest {
 
     private static final String[] TEST_STRINGS = {"Hello", ",", "World", "!"};
+    private static final String[] TEST_STRINGS2 = {"udinic", "", "", "snap"};
     private static final Character[] TEST_CHARACTERS = {'H', 'e', 'l', 'l', 'o', ',', 'W', 'o', 'r', 'l', 'd', '!'};
 
     private static final Function<String, String> UPPERCASE = String::toUpperCase;
@@ -39,8 +40,20 @@ public class StreamsTest {
         }
     };
 
+    private static final Predicate<Character> FAIL_ALL = new Predicate<Character>() {
+
+        @Override
+        public boolean test(Character character) {
+            return false;
+        }
+    };
+
     private final List<String> strings = spy(new ArrayList<>(Arrays.asList(TEST_STRINGS)));
+    private final List<String> strings2 = spy(new ArrayList<>(Arrays.asList(TEST_STRINGS2)));
     private final List<Character> characters = spy(new ArrayList<>(Arrays.asList(TEST_CHARACTERS)));
+
+    private final List<Character> empty = spy(new ArrayList<>(Arrays.asList()));
+
 
     @Test
     public void from_newStream_doesNotManipulateIterable() {
@@ -100,6 +113,28 @@ public class StreamsTest {
 
         assertEquals(expected, actual);
     }
+    @Test
+    public void flatMap_useSuppliedMapper_emptyWords() {
+        Stream<Character> characterStream = Streams.from(strings2).flatMap(CHARACTERS);
+        verifyZeroInteractions(strings2);
+
+        List<Character> expected = Arrays.asList('u', 'd', 'i', 'n', 'i', 'c', 's', 'n', 'a', 'p');
+        List<Character> actual = new ArrayList<>();
+        characterStream.forEach(actual::add);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void flatMap_useSuppliedMapper_emptySource() {
+        Stream<Character> characterStream = Streams.from(Arrays.<String>asList()).flatMap(CHARACTERS);
+
+        List<Character> expected = Arrays.asList();
+        List<Character> actual = new ArrayList<>();
+        characterStream.forEach(actual::add);
+
+        assertEquals(expected, actual);
+    }
 
     @Test
     public void filter_useSuppliedPredicate() {
@@ -107,6 +142,28 @@ public class StreamsTest {
         verifyZeroInteractions(strings);
 
         List<Character> expected = Arrays.asList('H', 'e', 'l', 'l', 'o', 'W', 'o', 'r', 'l', 'd');
+        List<Character> actual = new ArrayList<>();
+        characterStream.forEach(actual::add);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void filter_useSuppliedPredicate_emptySource() {
+        Stream<Character> characterStream = Streams.from(empty).filter(ONLY_LETTERS);
+
+        List<Character> expected = Arrays.asList();
+        List<Character> actual = new ArrayList<>();
+        characterStream.forEach(actual::add);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void filter_useSuppliedPredicate_allFiltered() {
+        Stream<Character> characterStream = Streams.from(characters).filter(FAIL_ALL);
+
+        List<Character> expected = Arrays.asList();
         List<Character> actual = new ArrayList<>();
         characterStream.forEach(actual::add);
 
